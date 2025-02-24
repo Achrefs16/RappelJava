@@ -1,62 +1,31 @@
-// ArticleDAO.java
 import java.sql.Connection;
 import java.sql.PreparedStatement;
-import java.sql.ResultSet;
 import java.sql.SQLException;
 
 public class ArticleDAO {
+    private Connection connection;
 
-    // Insert an Article or Fragile into the database
-    public void insertArticle(Article article) {
-        String sql = "INSERT INTO articles (type, marque, prixHT, paysDestination, emballage) VALUES (?, ?, ?, ?, ?)";
-
-        try (Connection conn = DatabaseConnection.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
-
-            // Determine the type and set parameters accordingly
-            if (article instanceof Fragile) {
-                stmt.setString(1, "Fragile");
-                stmt.setBoolean(5, ((Fragile) article).hasEmballage());
-            } else {
-                stmt.setString(1, "Article");
-                stmt.setObject(5, null);  // Not applicable for base articles
-            }
-            stmt.setString(2, article.getMarque());
-            stmt.setDouble(3, article.getPrixHT());
-            stmt.setString(4, article.getPaysDestination());
-
-            stmt.executeUpdate();
-
+    public ArticleDAO() {
+        try {
+            this.connection = DatabaseConnection.getConnection();
         } catch (SQLException e) {
             e.printStackTrace();
+            throw new RuntimeException("Error connecting to the database", e);
         }
     }
 
-    // Retrieve and display all articles from the database
-    public void afficherArticles() {
-        String sql = "SELECT id, type, marque, prixHT, paysDestination, emballage FROM articles";
-
-        try (Connection conn = DatabaseConnection.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql);
-             ResultSet rs = stmt.executeQuery()) {
-
-            while (rs.next()) {
-                int id = rs.getInt("id");
-                String type = rs.getString("type");
-                String marque = rs.getString("marque");
-                double prixHT = rs.getDouble("prixHT");
-                String paysDestination = rs.getString("paysDestination");
-                Boolean emballage = (Boolean) rs.getObject("emballage");
-
-                System.out.println("Article ID: " + id +
-                        ", Type: " + type +
-                        ", Marque: " + marque +
-                        ", PrixHT: " + prixHT +
-                        ", PaysDestination: " + paysDestination +
-                        (emballage != null ? ", Emballage: " + emballage : ""));
-            }
+    public void insertArticle(Article article, int magasinId) {
+        String sql = "INSERT INTO Articles (marque, prixHT, paysDestination, fragile, magasin_id) VALUES (?, ?, ?, ?, ?)";
+        try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
+            pstmt.setString(1, article.getMarque());
+            pstmt.setDouble(2, article.getPrixHT());
+            pstmt.setString(3, article.getPaysDestination());
+            pstmt.setBoolean(4, article.isFragile());
+            pstmt.setInt(5, magasinId);
+            pstmt.executeUpdate();
         } catch (SQLException e) {
             e.printStackTrace();
+            throw new RuntimeException("Error inserting article into database", e);
         }
     }
 }

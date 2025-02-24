@@ -1,59 +1,118 @@
+import java.sql.SQLException;
+import java.util.List;
 import java.util.Scanner;
 
 public class TestArticle {
     public static void main(String[] args) {
         Scanner scanner = new Scanner(System.in);
-        try {
-            // Prompt for basic Article details
-            System.out.println("Enter details for a standard Article:");
-            System.out.print("Marque: ");
-            String marque1 = scanner.nextLine();
-            System.out.print("Prix HT: ");
-            double prixHT1 = scanner.nextDouble();
-            scanner.nextLine(); // consume newline
-            System.out.print("Pays destination: ");
-            String paysDestination1 = scanner.nextLine();
+        MagasinDAO magasinDAO = new MagasinDAO();
+        ArticleDAO articleDAO = new ArticleDAO();
 
-            Article a1 = new Article(marque1, prixHT1, paysDestination1);
-            System.out.println("Prix transport a1: " + a1.prixTransport());
-            System.out.println("Pays destination a1: " + a1.getPaysDestination());
+        while (true) {
+            System.out.println("\nChoose an option:");
+            System.out.println("1️⃣ View all magasins with their articles");
+            System.out.println("2️⃣ Insert a new article into a magasin");
+            System.out.println("3️⃣ Exit");
+            System.out.print("Enter your choice: ");
 
-            // Prompt for Fragile Article details
-            System.out.println("\nEnter details for a Fragile Article:");
-            System.out.print("Marque: ");
-            String marque2 = scanner.nextLine();
-            System.out.print("Prix HT: ");
-            double prixHT2 = scanner.nextDouble();
-            scanner.nextLine(); // consume newline
-            System.out.print("Pays destination: ");
-            String paysDestination2 = scanner.nextLine();
-            System.out.print("Emballage (true/false): ");
-            boolean emballage = scanner.nextBoolean();
+            int choice = scanner.nextInt();
+            scanner.nextLine(); // Consume newline
 
-            Article tv = new Fragile(marque2, prixHT2, paysDestination2, emballage);
-            System.out.println("Prix transport tv: " + tv.prixTransport());
-            System.out.println("Pays destination tv: " + tv.getPaysDestination());
-
-            // Insert articles into the database using DAO
-            ArticleDAO dao = new ArticleDAO();
-            dao.insertArticle(a1);
-            dao.insertArticle(tv);
-
-            // Use local Magasin to display articles
-            Magasin magasin = new Magasin();
-            magasin.add(a1);
-            magasin.add(tv);
-            System.out.println("\nArticles from Magasin (local):");
-            magasin.afficherArticles();
-
-            // Display articles retrieved from the database
-            System.out.println("\nArticles from the Database:");
-            dao.afficherArticles();
-
-        } catch (PRTInfA10Exception e) {
-            System.out.println("Exception: " + e.getMessage());
-        } finally {
-            scanner.close();
+            switch (choice) {
+                case 1:
+                    afficherMagasins(magasinDAO);
+                    break;
+                case 2:
+                    insererArticle(magasinDAO, articleDAO, scanner);
+                    break;
+                case 3:
+                    System.out.println("Exiting program. Goodbye! 👋");
+                    scanner.close();
+                    return;
+                default:
+                    System.out.println("❌ Invalid choice. Please try again.");
+            }
         }
+    }
+
+    // Method to display all magasins with their articles
+    private static void afficherMagasins(MagasinDAO magasinDAO) {
+        List<Magasin> magasins = magasinDAO.getAllMagasins();
+        if (magasins.isEmpty()) {
+            System.out.println("⚠️ No magasins found in the database.");
+            return;
+        }
+
+        System.out.println("\n📋 All Magasins with Articles:");
+        for (Magasin m : magasins) {
+            System.out.println("🏪 Magasin: " + m.getName());
+            if (m.getArticles().isEmpty()) {
+                System.out.println("   (No articles in this magasin)");
+            } else {
+                System.out.println("   🛒 Articles:");
+                for (Article a : m.getArticles()) {
+                    System.out.println("     - " + a);
+                }
+            }
+            System.out.println();
+        }
+    }
+
+    // Method to insert a new article into a magasin
+    private static void insererArticle(MagasinDAO magasinDAO, ArticleDAO articleDAO, Scanner scanner) {
+        List<Magasin> magasins = magasinDAO.getAllMagasins();
+        if (magasins.isEmpty()) {
+            System.out.println("⚠️ No magasins found. Please add a magasin first.");
+            return;
+        }
+
+        // Display magasins for selection
+        System.out.println("\nAvailable magasins:");
+        for (int i = 0; i < magasins.size(); i++) {
+            System.out.println((i + 1) + ". " + magasins.get(i).getName());
+        }
+
+        System.out.print("Select a magasin (1-" + magasins.size() + "): ");
+        int magasinIndex = scanner.nextInt() - 1;
+        scanner.nextLine(); // Consume newline
+
+        if (magasinIndex < 0 || magasinIndex >= magasins.size()) {
+            System.out.println("❌ Invalid magasin choice.");
+            return;
+        }
+
+        Magasin selectedMagasin = magasins.get(magasinIndex);
+
+        // Collect article details
+        System.out.println("\nAdding an article to " + selectedMagasin.getName());
+        System.out.print("Enter marque: ");
+        String marque = scanner.nextLine();
+
+        System.out.print("Enter price (prixHT): ");
+        double prixHT = scanner.nextDouble();
+        scanner.nextLine(); // Consume newline
+
+        System.out.print("Enter pays de destination: ");
+        String paysDestination = scanner.nextLine();
+
+        System.out.print("Is it fragile? (true/false): ");
+        boolean fragile = scanner.nextBoolean();
+        scanner.nextLine(); // Consume newline
+
+        Article article;
+        if (fragile) {
+            System.out.print("Does it have packaging? (true/false): ");
+            boolean emballage = scanner.nextBoolean();
+            scanner.nextLine(); // Consume newline
+            article = new Fragile(marque, prixHT, paysDestination, emballage);
+        } else {
+            article = new Article(marque, prixHT, paysDestination);
+        }
+
+        // Insert article into the selected magasin
+        articleDAO.insertArticle(article, selectedMagasin.getId());
+        selectedMagasin.add(article);
+        System.out.println("✅ Article added successfully!");
+
     }
 }

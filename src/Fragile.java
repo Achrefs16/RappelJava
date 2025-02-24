@@ -1,30 +1,23 @@
-// Fragile.java
 public class Fragile extends Article {
     private boolean emballage;
 
     public Fragile(String marque, double prixHT, String paysDestination, boolean emballage) {
         super(marque, prixHT, paysDestination);
         this.emballage = emballage;
+        this.fragile = true;
     }
 
-    public Fragile(String marque, double prixHT, String paysDestination) {
-        super(marque, prixHT, paysDestination);
-        this.emballage = false;
-    }
-
-    @Override
-    public double prixTransport() throws PRTInfA10Exception {
-        // Double the transport price for fragile items
-        return 2 * super.prixTransport();
-    }
-
-    // Getter for emballage
     public boolean hasEmballage() {
         return emballage;
     }
 
     @Override
+    public double prixTransport() {
+        return emballage ? super.prixTransport() + 50 : super.prixTransport();
+    }
+
+    @Override
     public String toString() {
-        return "Fragile [marque=" + marque + ", prixHT=" + prixHT + ", paysDestination=" + getPaysDestination() + ", emballage=" + emballage + "]";
+        return "Fragile [marque=" + marque + ", prixHT=" + prixHT + ", paysDestination=" + paysDestination + ", fragile=" + fragile + ", emballage=" + emballage + "]";
     }
 }

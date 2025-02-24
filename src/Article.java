@@ -1,33 +1,37 @@
-// Article.java
-public class Article implements Exportable {
-    public static final double TVA = 0.18;
-    private static int nombreArticle = 0;
-    private int code;
+public class Article {
+    protected int code;
     protected String marque;
     protected double prixHT;
     protected String paysDestination;
+    protected boolean fragile;
 
     public Article(String marque, double prixHT, String paysDestination) {
-        this.code = ++nombreArticle;
         this.marque = marque;
         this.prixHT = prixHT;
         this.paysDestination = paysDestination;
+        this.fragile = false; // Default is not fragile
     }
 
-    public double prixTransport() throws PRTInfA10Exception {
-        double prix = 0.05 * prixHT;
-        if (prix < 10) {
-            throw new PRTInfA10Exception("Le prix du transport est inférieur à 10");
-        }
-        return prix;
+    public Article(int code, String marque, double prixHT, String paysDestination, boolean fragile) {
+        this.code = code;
+        this.marque = marque;
+        this.prixHT = prixHT;
+        this.paysDestination = paysDestination;
+        this.fragile = fragile;
     }
 
-    @Override
+    public double prixTransport() {
+        return fragile ? prixHT * 0.10 : prixHT * 0.05;
+    }
+
     public String getPaysDestination() {
         return paysDestination;
     }
 
-    // Additional getters
+    public int getCode() {
+        return code;
+    }
+
     public String getMarque() {
         return marque;
     }
@@ -36,8 +40,12 @@ public class Article implements Exportable {
         return prixHT;
     }
 
+    public boolean isFragile() {
+        return fragile;
+    }
+
     @Override
     public String toString() {
-        return "Article [code=" + code + ", marque=" + marque + ", prixHT=" + prixHT + ", paysDestination=" + paysDestination + "]";
+        return "Article [code=" + code + ", marque=" + marque + ", prixHT=" + prixHT + ", paysDestination=" + paysDestination + ", fragile=" + fragile + "]";
     }
 }
