@@ -57,4 +57,17 @@ public class MagasinDAO {
         }
         return magasins;
     }
+    public void addMagasin(String name) {
+        String sql = "INSERT INTO Magasin (name) VALUES (?)";
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setString(1, name);
+            pstmt.executeUpdate();
+            System.out.println("Magasin added successfully!");
+        } catch (SQLException e) {
+            e.printStackTrace();
+            throw new RuntimeException("Error adding magasin to the database", e);
+        }
+    }
+
 }
